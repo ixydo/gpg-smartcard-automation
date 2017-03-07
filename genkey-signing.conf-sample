@@ -1,0 +1,22 @@
+# This is the config file that will be used to generate your private keys.
+# Documentation on this file can be found at:
+# https://www.gnupg.org/documentation/manuals/gnupg-devel/Unattended-GPG-key-generation.html
+
+# Key-Type must come first. Only edit if you know what you're doing.
+Key-Type: RSA
+
+# BEGIN MAIN EDITABLE SECTION
+Name-Real: NAME
+Name-Comment: COMMENT
+Name-Email: EMAIL
+Key-Length: 2048
+Expire-Date: 730
+# END MAIN EDITABLE SECTION
+
+# Other settings to get the right type of keys generated
+Key-Usage: sign
+Preferences: SHA512 SHA384 SHA256 SHA224 AES256 AES192 AES CAST5 ZLIB BZIP2 ZIP Uncompressed
+
+# FINISH
+%commit
+%echo done
