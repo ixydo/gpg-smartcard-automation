@@ -1,3 +1,4 @@
+# vim:set ts=2 sw=2 sts=2 noexpandtab:
 ifeq ($(MAKECMDGOALS),signing)
 	KEYSET := signing
 else
@@ -12,8 +13,8 @@ else
 	GNUPGHOME := $(GPGHOME)
 endif
 
-# We require GPG 2.1 or greater
-GPGCMD := /usr/local/gnupg-2.1/bin/gpg --no-default-keyring --homedir . --keyring pubring.kbx
+GPGCMD ?= /usr/local/gnupg-2.1/bin/gpg --no-default-keyring --homedir .
+GPGCMD ?= /usr/local/Cellar/gnupg2/2.0.30_3/bin/gpg2 --no-default-keyring --keyring ./pubring.gpg --homedir .
 
 # VIRTUAL PHONIES
 .PHONY: default
@@ -45,12 +46,17 @@ $(GNUPGHOME)/revoke.txt: $(GNUPGHOME)/keyid.txt
 		&& $(GPGCMD) --gen-revoke $(shell cat $(GNUPGHOME)/keyid.txt) > revoke.txt
 
 $(GNUPGHOME)/subkeyid.txt: $(GNUPGHOME)/keyid.txt
-	cd $(GNUPGHOME) && $(GPGCMD) --list-secret-keys | awk '/^ssb/ {gsub("(rsa|elg|dsa|ecdh|ecdsa|eddsa)[0-9]+/", "", $$2); print $$2}' > subkeyid.txt
+	cd $(GNUPGHOME) && $(GPGCMD) --list-secret-keys | awk '/^ssb/ {gsub("(rsa|elg|dsa|ecdh|ecdsa|eddsa)*[0-9]+R?/", "", $$2); print $$2}' > subkeyid.txt
 
 $(GNUPGHOME)/keyid.txt: $(GNUPGHOME)/gpg.conf $(GNUPGHOME)/genkey-$(KEYSET).conf
 	cd $(GNUPGHOME) && $(GPGCMD) --batch --gen-key genkey-$(KEYSET).conf
-	cd $(GNUPGHOME) && $(GPGCMD) --list-secret-keys | awk '/^sec/ {gsub("(rsa|elg|dsa|ecdh|ecdsa|eddsa)[0-9]+/", "", $$2); print $$2}' > keyid.txt
-	cd $(GNUPGHOME) && $(GPGCMD) --change-passphrase $(shell awk '/^Name-Email/ {print $$2 }' $(GNUPGHOME)/genkey-$(KEYSET).conf)
+	cd $(GNUPGHOME) && $(GPGCMD) --list-secret-keys | awk '/^sec/ {gsub("(rsa|elg|dsa|ecdh|ecdsa|eddsa)*[0-9]+R?/", "", $$2); print $$2}' > keyid.txt
+	killall gpg-agent || :
+	cd $(GNUPGHOME) && /usr/local/Cellar/gpg-agent/2.0.30_1/bin/gpg-agent --daemon --write-env-file .gpg-agent-info --pinentry-program /usr/local/MacGPG2/libexec/pinentry-mac.app/Contents/MacOS/pinentry-mac --default-cache-ttl 60 --max-cache-ttl 120 --homedir . --use-standard-socket
+	sleep 1
+	eval $(shell cat $(GNUPGHOME)/.gpg-agent-info)
+	cd $(GNUPGHOME) && $(shell cat $(GNUPGHOME)/.gpg-agent-info) $(GPGCMD) --passwd $(shell awk '/^Name-Email/ {print $$2 }' $(GNUPGHOME)/genkey-$(KEYSET).conf)
+	killall gpg-agent || :
 
 $(GNUPGHOME)/genkey-$(KEYSET).conf:
 	cp genkey-$(KEYSET).conf-sample $(GNUPGHOME)/genkey-$(KEYSET).conf
