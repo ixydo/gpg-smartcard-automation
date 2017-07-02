@@ -6,8 +6,8 @@
 # User ID
 ###
 GPG_REAL_NAME="Real Name"
-GPG_COMMENT="https://keybase.io/username"
-GPG_EMAIL="your@email.address"
+GPG_COMMENT="https://keybase.io/userid"
+GPG_EMAIL="email@addr.ess"
 
 # Use the appropriate GPG_USER_ID line below as needed depending on which
 # combination of above values is set.
@@ -20,8 +20,8 @@ GPG_USER_ID="${GPG_REAL_NAME} (${GPG_COMMENT}) <${GPG_EMAIL}>"
 # Key parameters
 ###
 MASTER_ALGO="rsa4096"
-MASTER_VALIDITY="2y"
+MASTER_VALIDITY="5y"
 
 SUBKEY_ALGO="rsa2048"
-SUBKEY_VALIDITY="1y"
+SUBKEY_VALIDITY="2y"
 
