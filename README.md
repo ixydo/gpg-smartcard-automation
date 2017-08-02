@@ -1,4 +1,4 @@
-# Automate GPG hierarchy creation, optionally on Yubikey(s) and/or SmartCard(s)
+# Automate GPG hierarchy creation, optionally on Yubikey(s) and/or SmartCard(s)
 
 ## Quick start
 
@@ -6,9 +6,16 @@ These steps will prepare two SmartCards with secret subkeys, paperkey backups
 that can be printed, and a revocation certificate in case the master key is
 lost.
 
+1. Prepare some USB drives for storing and transferring keys:
+
+      1. Two USB thumb drives for storing your master key.  These should
+         ideally only be used on an airgapped device.
+      2. One USB thumb drive for transferring public keys and shadow keys to
+         your regular workstation.
+
 1. Generate keys - this step is ideally run on an air gapped device
 
-        make default
+       make default
 
     The above command will:
 
@@ -24,23 +31,48 @@ lost.
 
 2. Copy following files for use on main device
 
-        $(GNUPGHOME)/.data/id_rsa.pub
-        $(GNUPGHOME)/.data/subkeys.asc
+       $(GNUPGHOME)/.data/id_rsa.pub
+       $(GNUPGHOME)/.data/subkeys.asc
 
 3. Optionally store your revocation certificate somewhere safe and separate to
    your master key.
 
-        $(GNUPGHOME)/openpgp-revocs.d
+       $(GNUPGHOME)/openpgp-revocs.d
 
-4. Import subkeys to main device
+4. On your regular workstation:
 
-      For the first device:
+      1. Plug in a smartcard
+      2. Plug in the USB drive used to transfer between airgapped and
+         workstation.
+      3. Import the subkey shadows into your GPG keychain, and let GPG
+         recognize the shadow counterparts are on the smartcard.
 
-        SUBKEYS=/path/to/subkeys.asc make import-ssb
+          For the first device:
 
-      Then for the second device you only need to link the keys by calling:
+             SUBKEYS=/path/to/subkeys.asc make import-ssb
 
-        gpg --card-status
+          Then for the second device you only need to link the keys by calling:
+
+             gpg --card-status
+
+## Requirements
+
+1. GnuPG >= 2.1
+2. GNU Make
+
+
+### Optional
+
+- Air gapped device.  Either a system that is not online, or make use of
+  a live system image, with connectivity disabled.
+- One or two SmartCards, such as Yubikeys
+- At least two USB thumb drives to keep your master key safe.  You may want to
+  consider using SLC sticks, and/or using [ZFSonLinux](http://zfsonlinux.org/)
+  / [O3X](https://openzfsonosx.org/) to keep the keys safe.  More details on
+  some options below.
+- A third USB thumb drive to transfer subkeys shadows if using a SmartCard, or
+  private subkeys if not using a smartcard, and public keys to your regular
+  device.
 
 ## Overview
 
@@ -51,11 +83,11 @@ and import such a key set with minimal effort.
 The goal is to have a structure as follows for your day to day use such that
 the master secret key is only stored on cold storage and all the private sub
 keys are either soft keys in your regular ~/.gnupg keyring, or are stored on
-a yubikey or other PGP/GPG SmartCard.
+a Yubikey or other PGP/GPG SmartCard.
 
     sec#  rsa4096 2017-06-26 [C] [expires: 2022-06-25]
           D49147668E74D68C108A83DB53E708995F9835CD
-    uid           [ultimate] REAL NAME (https://keybase.io/userid) <user@emailaddr.ess>
+    uid           [ultimate] Real Name (https://keybase.io/userid) <email@addr.ess>
     ssb>  rsa2048 2017-06-26 [E] [expires: 2019-06-26]
     ssb>  rsa4096 2017-06-26 [S] [expires: 2019-06-26]
     ssb>  rsa4096 2017-06-26 [A] [expires: 2019-06-26]
@@ -112,15 +144,49 @@ a SmartCard.
 
 Ideally all your key material will be generated on an air gapped device.  If
 you use an ephemeral system for this, such as Tails, you'll need to keep your
-master key and revocation certificates on a couple of USB sticks.  You should
-probably use SLC (Single Layer Cell) USB sticks as they should be more
-resilient, and you should probably print out the paperkey representations of
-all private key material.
+master key and revocation certificates on a couple of USB sticks.
+
+You may want to use SLC (Single Layer Cell) USB sticks as they should be more
+resilient.
+
+You should probably print out the paperkey representations of all private key
+material.
+
+If you want to have interoperability between macOS and linux you can use
+[ZFSonLinux](http://zfsonlinux.org/) / [O3X](https://openzfsonosx.org/).  With
+that you can also create your pool with multiple copies of data so that bitrot
+is less likely to break your keys.
+
+If you want encryption and interoperability you can layer EncFS on top of ZFS.
+
+### Creating ZFS pools
+
+This section isn't comprehensive as there's enough documentation online,
+however here's a quick start to creating a pool with multipe data copies on
+a single stick:
+
+1. Determine the device for your USB stick
+
+       diskutil list
+
+    Look for the device that corresponds to the characteristics of your stick
+    and take node of the `/dev/diskX` title.
+
+2. Create the new zpool.  This is a destructive operation on the USB stick, so
+   be sure you know what you're doing.
+
+       sudo zpool create -f -o ashift=12 -O copies=3 -O normalization=formD gpg-backup-1 /dev/diskX
+
+    This will create a volume with 3 copies of your data.  To detect bitrot
+    you'll need to perform scrubs of the disk as ZFS doesn't do this during
+    normal operation.  See
+    [ZFSonLinux issue 1256](https://github.com/zfsonlinux/zfs/issues/1256)
+    for more details.
 
 ## To do
 
-- Manage key expiry extention.  As of GPG 2.1 only master keys can be
-  automated with --quick-set-expire.
+- Manage key expiry extention.  As of GPG 2.1 only master key expiry can be
+  easily manipulated with --quick-set-expire.
 - Add tests to validate all resulting artefacts are as expected, for example
   the exported ASCII armored private key and subkeys are well structured and
   encrypted, and the SSH public key is exported correctly.
