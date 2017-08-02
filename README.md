@@ -39,7 +39,11 @@ lost.
 
        $(GNUPGHOME)/openpgp-revocs.d
 
-4. On your regular workstation:
+4. Optionally print the paper master key.
+
+       $(GNUPGHOME)/.data/paperkey-master.txt
+
+5. On your regular workstation:
 
       1. Plug in a smartcard
       2. Plug in the USB drive used to transfer between airgapped and
@@ -102,7 +106,7 @@ Requirements:
 
 1. GnuPG >= 2.1
 2. GNU Make
-
+3. [Paperkey](http://www.jabberwocky.com/software/paperkey/)
 
 ### Optional
 
