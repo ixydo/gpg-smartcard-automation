@@ -4,7 +4,7 @@
 help:
 	@echo "Usage: [GPGHOME=/path/to/gnupghome] make [TARGET]"
 	@echo "Where:"
-	@echo "  GPGHOME          the path to a folder containing existing keyrings"
+	@echo "  GPGHOME          the path to a folder for new keyrings, or containing existing keyrings"
 	@echo
 	@echo "Targets:"
 	@echo "  default          create a soft master key and encryption subkey, then"
@@ -22,15 +22,16 @@ help:
 	@echo "  show             Display secret key information for temporary working path,"
 	@echo "                   and card status."
 	@echo
-	@echo "  remove-master    Backup and remove the private master key from the keychain"
-	@echo "                   in $(GNUPGHOME)"
+	@echo "  remove-master    Backup and remove the private master key from the working keychain"
 	@echo
 	@echo "  import-ssb FILE  Import secret subkeys in FILE and link to SmartCard"
 	@echo
 	@echo "  test             Perform a sign and encrypt, and a decrypt and verify to confirm"
 	@echo "                   all is functioning as expected."
 	@echo
-	@echo "  reset-yubikey    reset the GPG applet on a yubikey"
+	@echo "  reset-yubikey    Reset the GPG applet on a yubikey. WARNING: this will"
+	@echo "                   irrevicoable wipe your smartcard."
+	@echo
 	@echo "  clean            Clean up previously created GNUPGHOME paths"
 	@echo
 	@echo "Requirements:"

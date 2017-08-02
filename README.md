@@ -55,6 +55,49 @@ lost.
 
              gpg --card-status
 
+## Usage
+
+Use the built-in help for additional commands and usage
+
+```
+$ make help
+
+Usage: [GPGHOME=/path/to/gnupghome] make [TARGET]
+Where:
+  GPGHOME          the path to a folder for new keyrings, or containing existing keyrings
+
+Targets:
+  default          create a soft master key and encryption subkey, then
+                   initialise two smartcards with signing and auth subkeys
+                   and the soft encryption key.
+
+  softkeys         (default) create a full set of keys: master, soft signing
+                   subkey, soft encryption subkey, soft auth key.
+
+  master           create a master key used to sign subkeys.
+  signing          a soft subkey used for signing only
+  encryption       a soft subkey used for encryption only
+  auth             a soft subkey used for authentication only
+
+  show             Display secret key information for temporary working path,
+                   and card status.
+
+  remove-master    Backup and remove the private master key from the working keychain
+
+  import-ssb FILE  Import secret subkeys in FILE and link to SmartCard
+
+  test             Perform a sign and encrypt, and a decrypt and verify to confirm
+                   all is functioning as expected.
+
+  reset-yubikey    Reset the GPG applet on a yubikey. WARNING: this will
+                   irrevicoable wipe your smartcard.
+
+  clean            Clean up previously created GNUPGHOME paths
+
+Requirements:
+  Only GPG >= 2.1 is supported.
+```
+
 ## Requirements
 
 1. GnuPG >= 2.1
