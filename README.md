@@ -3,7 +3,20 @@
 TL;DR: jump to the [Instructions for creating an airgapped key set with two
 yubikeys](#scenario1)
 
-## Overview
+## Contents
+
+- [Overview](#overview)
+- [What to expect](#what-to-expect)
+- [Requirements](#requirements)
+- [Usage](#usage)
+- [Scenario 1: Instructions for creating an airgapped key set with two yubikeys](#scenario1)
+- [Scenario 2: Instructions for creating an airgapped soft key set](#scenario2)
+- [Key practices followed in this repository](#key-practices)
+- [Using ZFS and EncFS](#zfs)
+- [To do](#to-do)
+- [Known issues](#known-issues)
+
+## <a name=overview />Overview
 
 There are numerous well written guides that describe how to manually generate
 a GPG key set, both for soft keys and for Yubikeys or other PGP/GPG
@@ -21,7 +34,7 @@ There are a couple of scenarios currently supported:
 
 You can, of course, choose not to keep your master key offline or airgapped.
 
-### What to expect
+### <a name=what-to-expect />What to expect
 
 The goal is to have a structure as follows for your day to day use.  The
 master secret key is:
@@ -56,7 +69,7 @@ In the above example we can make the following observations:
 - the signing and authentication keys are 4096 bit as they're generated on the
   card at the maximum supported bits for that specific card.
 
-## Requirements
+## <a name=requirements />Requirements
 
 1. GnuPG >= 2.1
 2. GNU Make
@@ -79,7 +92,13 @@ In the above example we can make the following observations:
   your regular device.
 - Access to a printer for creating your hard copies of your master key.
 
-## <a name="scenario1"></a>Instructions for creating an airgapped key set with two yubikeys
+## <a name=usage />Usage
+
+Use the built-in help for additional targets and usage.
+
+    gmake help
+
+## <a name="scenario1" />Scenario 1: Instructions for creating an airgapped key set with two yubikeys
 
 These steps will take you through an example scenario.  Adjust as needed.
 
@@ -96,9 +115,9 @@ These steps will take you through an example scenario.  Adjust as needed.
 3. GhostBSD live image.  At the time of writing, the GhostBSD 11 beta images
    worked well, supports ZFS, and has up to date GPG packages.  You could also
    use any linux live system, such as [Tails](https://tails.boum.org), however
-   be aware you won't get ZFS with that.  See the [Cold storage of the master
-   key and revocation certificates](#zfs) section below for why ZFS would be
-   of value.
+   be aware you won't get ZFS with that.  See the [Cold storage of the secret
+   keys and revocation certificates](#cold-storage) section below for why ZFS
+   would be of value.
 4. Passwords you'll be using to protect your keys, and if you choose to use
    EncFS, then also for the encrypted mount.
 5. Printer for the paper keys.
@@ -142,44 +161,45 @@ damaged or compromised.
        GUI.
     2. In a terminal, get the necessary packages:
 
-        sudo pkg install gnupg paperkey fusefs-encfs gmake
+           sudo pkg install gnupg paperkey fusefs-encfs gmake
 
     3. Turn off networking:
 
-        sudo service netif stop
+           sudo service netif stop
 
 3. Insert the *transfer USB stick*, mount it, and copy the
    gpg-smartcard-automation repository off the USB stick.  I recommend *not*
    working directly from the stick as I've experienced odd behaviours with the
    filesystems when doing this.
 
-		mkdir ~ghostbsd/zpools
-		sudo zpool import -R ~ghostbsd/zpools airgap-transfers
-    sudo zpool scrub airgap-transfers
-		cp -a ~/zpools/airgap-transfers/gpg-smartcard-automation ~/
-		sudo zpool export airgap-transfers
+       mkdir ~ghostbsd/zpools
+       sudo zpool import -R ~ghostbsd/zpools airgap-transfers
+       sudo zpool scrub airgap-transfers
+       cp -a ~/zpools/airgap-transfers/gpg-smartcard-automation ~/
+       sudo zpool export airgap-transfers
 		
 4. Create your keyset:
 
     1. Prepare your working environment
 
-        setenv GPGHOME $HOME/gpg-20170903
-        cd ~/gpg-smartcard-automation
+           setenv GPGHOME $HOME/gpg-20170903
+           cd ~/gpg-smartcard-automation
 
     2. Insert the first yubikey.  If you've not used the key before, or if
        you're recently reset it (try `gmake reset-yubikey`), then the default
-       admin PIN is 12345678, and regular PIN is 123456.
+       admin PIN is `12345678`, and regular PIN is `123456`.  Remember to change
+       the default PIN as soon as possible (hint: `gpg --card-edit`).
 
-        gmake default
+           gmake default
 
        You'll be prompted for your password many times.  Follow the
-       instructions in the output to complete this step.
+       instructions in the output to complete all the parts of this step.
 
     3. If you'll be using a second yubikey, insert it now.  The tooling will
        prepare another GPG homedir and keychain to work around a [GnuPG
        limitation that will be fixed by T2291](https://dev.gnupg.org/T2291).
 
-        gmake import-secrets sckey
+           gmake import-secrets sckey
 
        You can skip this step if you're only preparing a single Yubikey.
 		
@@ -188,7 +208,7 @@ damaged or compromised.
 
        1. Insert first *secure USB stick*, then
     
-            ./copy-secrets-to-usb.sh $GPGHOME secure-1
+              ./copy-secrets-to-usb.sh $GPGHOME secure-1
 
           In this case, `secure-1` is the pool name for this USB stick.  This
           scripts assume you're using ZFS and EncFS.
@@ -200,37 +220,37 @@ damaged or compromised.
           main device.  As before, the second argument is the ZFS pool name.
           In this case there's no EncFS as there's nothing to be hidden here.
 
-            ./copy-to-transfer-usb.sh $GPGHOME airgap-transfers
+             ./copy-to-transfer-usb.sh $GPGHOME airgap-transfers
 
     5. Print the paper master key.  Ideally this will be via a USB connected
        printer rather than something wireless or networked.  The file to print
        is:
 
-        $(GPGHOME)/DATA-airgapped/paperkey-master.txt
+           $(GPGHOME)/DATA-airgapped/paperkey-master.txt
 	
-  At this point you're done with the air gapped live OS work!
+    At this point you're done with the air gapped live OS work!
 
 5. Import your new keys to your main devices.
 
-  1. Insert the *transfer USB stick* into your main device and copy the
-     `$GPGHOME` path across to your system.  For example
+    1. Insert the *transfer USB stick* into your main device and copy the
+       `$GPGHOME` path across to your system.  For example
 
-        cp -a /Volumes/airgap-transfers/gpg-20170903 ~/ownCloud/
+           cp -a /Volumes/airgap-transfers/gpg-20170903 ~/ownCloud/
 
-  2. If you prepared multiple Yubikeys, some files will be suffixed with the
-     Yubikey serial number, for example
-     `$GPGHOME/DATA-transferred/subkey-shadows-03821903.asc`.  Choose the one
-     you want to import and pull it in.
+    2. If you prepared multiple Yubikeys, some files will be suffixed with the
+       Yubikey serial number, for example
+       `$GPGHOME/DATA-transferred/subkey-shadows-03821903.asc`.  Choose the one
+       you want to import and pull it in.
 
-        gpg --import < ~/ownCloud/gpg-20170903/DATA-transferred/subkey-shadows-03821903.asc
+           gpg --import < ~/ownCloud/gpg-20170903/DATA-transferred/subkey-shadows-03821903.asc
 
-  3. Create the link between the imported shadows keys and your Yubikey:
+    3. Create the link between the imported shadows keys and your Yubikey:
 
-        gpg --card-status
+           gpg --card-status
 
-  4. If you want to use your other Yubikey with your mobile you'll need to
-     import the other `subkey-shadows-*.asc` file into something like
-     OpenKeyChain (for Android), then register your Yubikey with the app.
+    4. If you want to use your other Yubikey with your mobile you'll need to
+       import the other `subkey-shadows-*.asc` file into something like
+       OpenKeyChain (for Android), then register your Yubikey with the app.
 
 ### What next
 
@@ -241,7 +261,7 @@ trust:
 - Upload your new public key to https://keybase.io
 - Pull in the public keys for your second set of keys.
 
-## <a name="scenario2"></a>Instructions for creating an airgapped soft key set
+## <a name="scenario2" />Scenario 2: Instructions for creating an airgapped soft key set
 
 If you don't have a smartcard, you can generate only soft keys, with the
 master key kept in cold storage, and your subkeys available to your every day
@@ -256,14 +276,7 @@ across to the your main device, and those steps will be detailed soon.  Short
 explanation is that you'll likely want to use an EncFS on your *transfer USB
 stick* to keep those secrets less exposed.
 
-
-## Usage
-
-Use the built-in help for additional targets and usage.
-
-    gmake help
-
-## Key practices followed in this repository
+## <a name=key-practices />Key practices followed in this repository
 
 ### Offline master key
 
@@ -272,10 +285,10 @@ stored on a device used daily.  It's a good idea to keep this safe on an
 encrypted USB device, and even better to have a print out of it, as is
 prepared by paperkey.
 
-The generate master key backups are stored at:
+The generated master key backups are stored at:
 
-  - $(GPGHOME)/DATA-airgapped/key-master.asc
-  - $(GPGHOME)/DATA-airgapped/paperkey-master.txt
+- $(GPGHOME)/DATA-airgapped/key-master.asc
+- $(GPGHOME)/DATA-airgapped/paperkey-master.txt
 
 ### Separate signing, encryption and authentication sub keys
 
@@ -296,10 +309,10 @@ keys directly on the cards.
 If you don't have a smartcard then you can generate all the keys as soft keys
 using [scenario 2](#scenario2).
 
-Storing and keeping the soft keys requires a little more prudence than when
+Storing and keeping the soft keys requires a more prudence than when
 using a smartcard.
 
-### <a name="cold-storage"></a>Cold storage of the secret keys and revocation certificates
+### <a name="cold-storage" />Cold storage of the secret keys and revocation certificates
 
 Ideally all your key material will be generated on an air gapped device, and
 even better on a live OS so there's no persistence.  If you use an ephemeral
@@ -315,9 +328,9 @@ You should also print out the paperkey representations of all private key
 material as paper generally lasts a lot longer than USB thumb drives under
 normal conditions.
 
-### <a name="zfs"></a>Using ZFS and EncFS
+## <a name="zfs" />Using ZFS and EncFS
 
-Using ZFS offers several benefits:
+Using ZFS offers some benefits:
 
 - Interoperability between unix and macOs. On Linux this is availabe from the
   [ZFSonLinux](http://zfsonlinux.org/) project, and on macOS use
@@ -330,7 +343,7 @@ Using ZFS offers several benefits:
 Using EncFS on top of ZFS has the benefit of interoperability between unix
 and macOS.
 
-#### Creating ZFS pools
+### Creating ZFS pools
 
 This section isn't comprehensive as there's enough documentation online,
 however here's a quick start to creating a pool with multipe data copies on
@@ -354,7 +367,20 @@ a single stick:
     [ZFSonLinux issue 1256](https://github.com/zfsonlinux/zfs/issues/1256)
     for more details.
 
-## To do
+### Mounting and unmounting ZFS volumes
+
+On macOS, if you have O3X installed, when you insert a ZFS USB stick it should
+get mounted automatically.  If not, the follwing is what you need:
+
+    sudo zpool import POOL_NAME
+    
+You can get a list of available pools by omiting the `POOL_NAME`.
+
+Before you remove a USB stick from macOS you must *export* it:
+
+    sudo zpool export POOL_NAME
+
+## <a name=to-do />To do
 
 - Manage key expiry extention.  As of GPG 2.1 only master key expiry can be
   easily manipulated with --quick-set-expire.
@@ -368,7 +394,7 @@ a single stick:
   has probably grown beyond that and would benefit from a rewrite in something
   more suitable.
 
-## Known issues
+## <a name=known-issues />Known issues
 
 ### GPG max key size
 
@@ -386,3 +412,14 @@ running `gpg-agent`.  Unfortunately sockets on Unix systems have a hard limit
 of 108 characters in their path, including macOS.  This is not a limitation of
 GnuPG but rather of the underlying OS, and `gpg` may fail slightly cryptically
 if the path is longer than 108 characters.
+
+### GPG only supports one card pointer per shadow/stub key
+
+This is a [GnuPG limitation that will be fixed by T2291](https://dev.gnupg.org/T2291).
+Unfortunately this didn't make it into the GnuPG-2.2.  We work around this limitation
+by generating seaprate $GNUPGHOME folders for each smartcard being used.  You then
+only import the main one you would use day to day on a given device, but if the
+need arises you're still able to switch to using the other smartcard by deleting
+your key shadows/stubs (hint: `gpg --delete-secret-and-public-keys 0xKEY_ID`), then
+re-importing the other shadows/stubs and registering them with the `gpg --card-status`
+command.
