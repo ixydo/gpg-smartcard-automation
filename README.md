@@ -52,21 +52,26 @@ keyring, or are stored on a Yubikey or other PGP/GPG smartcard.
     ssb>  rsa2048 2017-06-26 [E] [expires: 2019-06-26]
     ssb>  rsa4096 2017-06-26 [S] [expires: 2019-06-26]
     ssb>  rsa4096 2017-06-26 [A] [expires: 2019-06-26]
+    ssb#  rsa2048 2017-09-09 [S] [expires: 2019-06-26]
+    ssb#  rsa2048 2017-09-09 [A] [expires: 2019-06-26]
 
 In the above example we can make the following observations:
 
-- the `#` in `sec#` indicates the private key part of the master key is not
+- `#` in `sec#` indicates the private key part of the master key is not
   available locally
-- the `>` in `ssb>` indicates the private key for each subkey is stored on
+- `>` in `ssb>` indicates the private key for each subkey is stored on
   a PGP/GPG SmartCard or Yubikey.
-- the `[C]` indicates the key is only capable of certification
+- `#` in `ssb#` indicates the public key for these subkeys is available.  This
+  would usually be the case if you have the public keys for an additional
+  smartcard in your keychain.
+- `[C]` indicates the key is only capable of certification
 - signing (`[S]`), encryption (`[E]`) and authentication (`[A]`) are all
-  achieved by the individual subkeys
-- the encryption key is 2048 bit so that it can be shared between multiple
+  achieved by the corresponding individual subkeys
+- The encryption key is 2048 bit so that it can be shared between multiple
   smartcards or yubikeys, among which the lowest common support is 2048 bit
   keys.  If your smartcards support higher sizes you can use the size you
   need.
-- the signing and authentication keys are 4096 bit as they're generated on the
+- The signing and authentication keys are 4096 bit as they're generated on the
   card at the maximum supported bits for that specific card.
 
 ## <a name=requirements />Requirements
