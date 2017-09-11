@@ -201,7 +201,8 @@ $(GPGHOME)/DATA-transferred/keyfp-master.txt: $(GPGHOME)/DATA-transferred/keyid-
 
 $(GPGHOME)/DATA-airgapped/key-master.asc: $(GPGHOME)/DATA-transferred/keyfp-master.txt
 	cd $(GNUPGHOME) \
-		&& $(GPGCMD) --armor --output $(GPGHOME)/DATA-airgapped/key-master.asc --export-secret-keys $(shell head -n1 $(GPGHOME)/DATA-transferred/keyid-master.txt)
+		&& $(GPGCMD) --armor --output $(GPGHOME)/DATA-airgapped/key-master.asc --export-secret-keys $(shell head -n1 $(GPGHOME)/DATA-transferred/keyid-master.txt) \
+		&& $(GPGCMD) --armor --output $(GPGHOME)/DATA-transferred/key-master.pub --export $(shell head -n1 $(GPGHOME)/DATA-transferred/keyid-master.txt)
 
 $(GPGHOME)/DATA-airgapped/paperkey-master.txt: $(GPGHOME)/DATA-airgapped/key-master.asc
 	cd $(GNUPGHOME) \
@@ -220,7 +221,8 @@ $(GPGHOME)/DATA-transferred/subkeyid-$(KEYSET).txt: $(GNUPGHOME)/gpg.conf $(GPGH
 
 $(GPGHOME)/DATA-airgapped/subkey-$(KEYSET).asc: $(GPGHOME)/DATA-transferred/subkeyid-$(KEYSET).txt
 	cd $(GNUPGHOME) \
-		&& $(GPGCMD) --armor --output $(GPGHOME)/DATA-airgapped/subkey-$(KEYSET).asc --export-secret-subkeys "$(shell head -n1 $(GPGHOME)/DATA-transferred/subkeyid-$(KEYSET).txt)"
+		&& $(GPGCMD) --armor --output $(GPGHOME)/DATA-airgapped/subkey-$(KEYSET).asc --export-secret-subkeys "$(shell head -n1 $(GPGHOME)/DATA-transferred/subkeyid-$(KEYSET).txt)" \
+		&& $(GPGCMD) --armor --output $(GPGHOME)/DATA-transferred/subkey-$(KEYSET).pub --export "$(shell head -n1 $(GPGHOME)/DATA-transferred/subkeyid-$(KEYSET).txt)"
 
 $(GPGHOME)/DATA-airgapped/paperkey-subkey-$(KEYSET).txt: $(GPGHOME)/DATA-airgapped/subkey-$(KEYSET).asc
 	cd $(GNUPGHOME) \
@@ -304,6 +306,7 @@ $(GPGHOME)/DATA-transferred/subkey-shadows.asc:
 	cd $(GNUPGHOME) && \
 		CARDNO=$(shell $(GPGCMD) --card-status | awk -F: '/^Serial/ {gsub("[    ]+", "", $$2); print $$2}') && \
 		$(GPGCMD) --export-secret-subkeys --armor > $(GPGHOME)/DATA-transferred/subkey-shadows-$${CARDNO}.asc
+		$(GPGCMD) --export --armor > $(GPGHOME)/DATA-transferred/subkey-shadows-$${CARDNO}.pub
 
 .PHONY: import-ssb
 import-ssb:

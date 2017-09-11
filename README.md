@@ -258,8 +258,15 @@ You may want to do a few further things to strengthen your key and web of
 trust:
 
 - Sign your new key with your old key.
-- Upload your new public key to https://keybase.io
+
+      gpg --local-user 0xOLD_KEY_ID --sign-key NEW_KEY_ID
+
 - Pull in the public keys for your second set of keys.
+
+      gpg --import /path/to/DATA-transferred/key-master.pub
+      gpg --import /path/to/DATA-transferred/subkey*.pub
+
+- Upload your new public key to https://keybase.io
 
 ## <a name="scenario2" />Scenario 2: Instructions for creating an airgapped soft key set
 
@@ -373,7 +380,7 @@ On macOS, if you have O3X installed, when you insert a ZFS USB stick it should
 get mounted automatically.  If not, the follwing is what you need:
 
     sudo zpool import POOL_NAME
-    
+
 You can get a list of available pools by omiting the `POOL_NAME`.
 
 Before you remove a USB stick from macOS you must *export* it:
