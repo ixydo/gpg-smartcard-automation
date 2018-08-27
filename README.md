@@ -13,6 +13,7 @@ yubikeys](#scenario1)
 - [Scenario 2: Instructions for creating an airgapped soft key set](#scenario2)
 - [Key practices followed in this repository](#key-practices)
 - [Using ZFS and EncFS](#zfs)
+- [Expired Key Renewals](#renewal)
 - [To do](#to-do)
 - [Known issues](#known-issues)
 
@@ -393,7 +394,7 @@ Before you remove a USB stick from macOS you must *export* it:
     sudo zpool export POOL_NAME
 
 
-## Expired key renewals
+## <a name=renewal />To doExpired key renewals
 
 If you're managing multiple smartcards you'll need to follow these steps for each smartcard.
 
