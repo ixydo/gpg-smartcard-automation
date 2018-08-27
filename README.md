@@ -392,6 +392,60 @@ Before you remove a USB stick from macOS you must *export* it:
 
     sudo zpool export POOL_NAME
 
+
+## Expired key renewals
+
+If you're managing multiple smartcards you'll need to follow these steps for each smartcard.
+
+1. Ensure you're working from a clean slate
+
+        gpgconf --kill gpg-agent scdaemon
+        ps -ef | grep gpg
+
+2. Set up your working environment
+
+        export GNUPGHOME=/path/to/gpg/conf/path
+
+3. Get the primary key ID
+
+        gpg --card-status
+
+4. Start GPG key editing
+
+        gpg --edit-key $PRIMARY_KEY
+
+5. Select the keys you want to update
+
+        gpg> key 1
+        gpg> key 4
+        gpg> key 5
+
+6. Update expiry on the keys
+
+        gpg> expire
+        ...
+
+7. Save and exit
+
+        gpg> save
+
+8. Export the new subkey shadows
+
+        for key in $subkey1 $subkey2 $subkey3; do
+          gpg --export-secret-subkeys --export-options export-minimal --armor $key > $key.shadow
+        done
+
+    Note that the inspected exports will appear to contain the primary key, however GnuPG
+    essentially supports this `--export-secret-subkeys` as an extension to the PGP standard, and
+    the primary key in these exports has been rendered unusable.
+
+9. Export the new public keys
+
+        gpg --export --export-options export-minimal --armor $PRIMARY_KEY > $GNUPGHOME/keys.pub
+
+10. Transfer the exported `*.shadow` files to your main systems and `gpg --import` the ones
+    relevant to the smartcard you use on that device.
+
 ## <a name=to-do />To do
 
 - Manage key expiry extention.  As of GPG 2.1 only master key expiry can be
@@ -405,6 +459,32 @@ Before you remove a USB stick from macOS you must *export* it:
   we're creating many files and it should handle idempotence for us.  The code
   has probably grown beyond that and would benefit from a rewrite in something
   more suitable.
+
+## Using Raspbian as an airgapped system
+
+With a Raspberry Pi I wasn't able to get a working ZFS set up, probably because the Pi I'm using
+is 32bit, but it could also be due to limited memory.
+
+### Quick start
+
+- Raspberry Pi (tested on a Pi Zero)
+- Raspbian (tested with Debian Stretch)
+- Install the base system to an SD card
+- Install essential packages
+
+        apt-get update
+        apt-get install paperkey scdaemon
+
+- You may want to use LUKS encrypted volume, in which case you'll need:
+
+        apt-get install cryptsetup
+
+- Update & upgrade the system
+
+        apt-get update
+        apt-get upgrade
+
+- Copy this repository on to the Raspberry Pi
 
 ## <a name=known-issues />Known issues
 

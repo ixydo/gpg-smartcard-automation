@@ -21,6 +21,9 @@ help:
 	@echo "  encryption       a soft subkey used for encryption only"
 	@echo "  auth             a soft subkey used for authentication only"
 	@echo
+	@echo "  id_rsa.pub       extract the SSH public key from the authentication key, placing the"
+	@echo "                   resulting file at \$$(GPGHOME)/DATA-transferred/id_rsa-\$${SSH_KEY}.pub"
+	@echo
 	@echo "  import-secrets   delete the master key and subkeys, then re-import the master key"
 	@echo "                   and the encryption subkey"
 	@echo
@@ -282,7 +285,7 @@ cardedit: $(GPGHOME)/DATA-transferred/keyid-master.txt
 ###
 .PHONY: import-secrets
 import-secrets: $(GNUPGHOME)/gpg.conf
-	killall gpg-agent scdaemon 2>/dev/null || :
+	gpgconf --kill gpg-agent scdaemon
 	cd $(GNUPGHOME) && \
 		$(GPGCMD) --batch --delete-secret-and-public-keys "$(shell head -n1 $(GPGHOME)/DATA-transferred/keyid-master.txt)" || :; \
 		$(GPGCMD) --import $(GPGHOME)/DATA-airgapped/key-master.asc && \
@@ -314,7 +317,7 @@ import-ssb:
 		echo "ERROR: You must set SHADOWS=/path/to/DATA-transfered/subkey-shadows.asc for this to work."; \
 		exit 1; \
 	fi
-	killall gpg-agent scdaemon 2>/dev/null || :
+	gpgconf --kill gpg-agent scdaemon
 	$(GPGBIN) --import $(SHADOWS)
 	$(GPGBIN) --card-status
 
@@ -323,7 +326,7 @@ import-ssb:
 ###
 .PHONY: test
 test:
-	killall gpg-agent scdaemon 2>/dev/null || :
+	gpgconf --kill gpg-agent scdaemon
 	@echo '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%'
 	@echo 'Testing that we can encrypt & sign, then decrypt and validate a message.'
 	@cd $(GNUPGHOME) && \
@@ -347,7 +350,7 @@ $(GPGHOME)/DATA-airgapped/.keep: $(GPGHOME)/DATA-transferred/.keep
 	touch "$(GPGHOME)/DATA-airgapped/.keep"
 
 $(GNUPGHOME):
-	killall gpg-agent scdaemon 2>/dev/null || :
+	gpgconf --kill gpg-agent scdaemon
 	mkdir -m 0700 -p $(GNUPGHOME)
 
 $(GPGHOME)/DATA-airgapped/gpg-version: $(GNUPGHOME) $(GPGHOME)/DATA-airgapped/.keep
