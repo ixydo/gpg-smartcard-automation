@@ -35,6 +35,11 @@ There are a couple of scenarios currently supported:
 
 You can, of course, choose not to keep your master key offline or airgapped.
 
+Additionally you can keep your master key on a smartcard to aide with sub key
+renewals.  If you have a spare smartcard or are willing to purchase one, this
+is highly recommended as it massively simplifies renewals and certification of
+other keys.  See the [instructions on the wiki](https://github.com/jinnko/gpg-smartcard-automation/wiki#using-a-separate-smartcard-for-the-master-certification-key) for how to do this.
+
 ### <a name=what-to-expect />What to expect
 
 The goal is to have a structure as follows for your day to day use.  The
